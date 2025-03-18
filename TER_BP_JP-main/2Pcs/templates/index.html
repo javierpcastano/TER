@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Plot</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Données Slot-Car</h1>
+    <canvas id="realtimeChart" width="800" height="400"></canvas>
+
+    <script>
+        const ctx = document.getElementById('realtimeChart').getContext('2d');
+
+				let chartData = [];
+				let labels = [];
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels, // Timestamps or indices
+                datasets: [{
+                    label: 'Plot: Tension en function du temps',
+                    data: chartData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Temps'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Tensions'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Connect to the Flask-SocketIO server
+        const socket = io();
+
+        // Attendre le message 'update_plot'
+        socket.on('update_plot', (message) => {
+            console.log("Received data update:", message);  // Debugging log
+
+						const latestValue = message.value;
+						
+						labels.push(labels.length);
+						chartData.push(latestValue);
+						
+						//ceci permet de garder 50 points max dans le Plot
+						//Si on veut toute l'info de la piste faut l'effacer
+						if (chartData.length > 50 ) {
+							chartData.shift();
+							labels.shift();
+						}
+
+						chart.update();
+        });
+    </script>
+</body>
+</html>
+
